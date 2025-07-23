@@ -11,19 +11,49 @@
     <div class="max-w-md w-full space-y-8 p-8">
         <h1 class="text-3xl font-bold text-center text-gray-900">Supabase 認証テスト</h1>
     
-    <div id="auth-form">
-        <h2>ログイン/サインアップ</h2>
-        <input type="email" id="email" placeholder="test@example.com">
-        <input type="password" id="password" placeholder="test1234">
+    <div id="auth-form" class="bg-white p-8 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold text-gray-700 mb-6">ログイン/サインアップ</h2>
+        <div class="space-y-4">
+            <input type="email" id="email" placeholder="test@example.com" 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="password" id="password" placeholder="test1234"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="space-y-2 mt-6">
         <button onclick="signUp()" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">サインアップ</button>
         <button onclick="signIn()" class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">ログイン</button>
         <button onclick="checkUser()" class="w-full bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">ユーザー状態確認</button>
+        </div>
     </div>
     
-    <div id="user-info" style="display:none;">
-        <h2>ログイン成功！</h2>
-        <p id="user-email"></p>
-        <button onclick="signOut()">ログアウト</button>
+    <div id="user-info" style="display:none;" class="bg-white p-8 rounded-lg shadow-md">
+        <div class="mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">ダッシュボード</h2>
+            <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                <p id="user-email" class="text-gray-700 font-medium"></p>
+                <p id="user-created" class="text-gray-500 text-sm mt-1"></p>
+                <p id="user-last-signin" class="text-gray-500 text-sm"></p>
+            </div>
+            <button onclick="signOut()" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">ログアウト</button>
+        </div>
+        
+        <!-- TODO入力フォーム -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-3">新しいTODO</h3>
+            <div class="flex space-x-2">
+                <input type="text" id="todo-input" placeholder="TODOを入力..." 
+                       class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button onclick="addTodo()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">追加</button>
+            </div>
+        </div>
+        
+        <!-- TODOリスト表示 -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-3">TODOリスト</h3>
+            <div id="todo-list" class="space-y-2">
+                <!-- TODOアイテムがここに表示される -->
+            </div>
+        </div>
     </div>
 
     <script>
@@ -95,7 +125,13 @@
         function showUserInfo(user) {
             document.getElementById('auth-form').style.display = 'none'
             document.getElementById('user-info').style.display = 'block'
+            
+            // プロフィール情報を表示
             document.getElementById('user-email').textContent = 'メール: ' + user.email
+            document.getElementById('user-created').textContent = '登録日: ' + new Date(user.created_at).toLocaleDateString('ja-JP')
+            document.getElementById('user-last-signin').textContent = '最終ログイン: ' + new Date(user.last_sign_in_at).toLocaleString('ja-JP')
+            
+            loadTodos()
         }
 
         // ユーザー情報非表示
@@ -113,6 +149,78 @@
                 alert(`ログイン中: ${user.email}\nメール確認: ${user.email_confirmed_at ? '確認済み' : '未確認'}`)
             } else {
                 alert('ログインしていません')
+            }
+        }
+
+        // TODO追加関数
+        async function addTodo() {
+            const todoInput = document.getElementById('todo-input')
+            const title = todoInput.value.trim()
+            
+            if (!title) {
+                alert('TODOを入力してください')
+                return
+            }
+            
+            const { data: { user } } = await supabase.auth.getUser()
+            
+            const { data, error } = await supabase
+                .from('todos')
+                .insert([
+                    { user_id: user.id, title: title, completed: false }
+                ])
+            
+            if (error) {
+                alert('エラー: ' + error.message)
+            } else {
+                todoInput.value = ''
+                loadTodos()
+            }
+        }
+
+        // TODOリスト取得・表示関数
+        async function loadTodos() {
+            const { data: { user } } = await supabase.auth.getUser()
+            
+            const { data: todos, error } = await supabase
+                .from('todos')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+            
+            if (error) {
+                console.error('TODOリスト取得エラー:', error)
+                return
+            }
+            
+            const todoList = document.getElementById('todo-list')
+            todoList.innerHTML = ''
+            
+            todos.forEach(todo => {
+                const todoItem = document.createElement('div')
+                todoItem.className = 'flex items-center p-3 bg-gray-50 rounded-md'
+                todoItem.innerHTML = `
+                    <span class="flex-1 ${todo.completed ? 'line-through text-gray-500' : 'text-gray-800'}">${todo.title}</span>
+                    <button onclick="toggleTodo(${todo.id}, ${!todo.completed})" 
+                            class="ml-2 px-3 py-1 text-sm rounded ${todo.completed ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'} text-white">
+                        ${todo.completed ? '未完了' : '完了'}
+                    </button>
+                `
+                todoList.appendChild(todoItem)
+            })
+        }
+
+        // TODO完了/未完了切り替え関数
+        async function toggleTodo(id, completed) {
+            const { data, error } = await supabase
+                .from('todos')
+                .update({ completed: completed })
+                .eq('id', id)
+            
+            if (error) {
+                alert('エラー: ' + error.message)
+            } else {
+                loadTodos()
             }
         }
 
