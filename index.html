@@ -4,18 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supabase認証デモ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
-    <h1>Supabase 認証テスト</h1>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full space-y-8 p-8">
+        <h1 class="text-3xl font-bold text-center text-gray-900">Supabase 認証テスト</h1>
     
     <div id="auth-form">
         <h2>ログイン/サインアップ</h2>
         <input type="email" id="email" placeholder="test@example.com">
         <input type="password" id="password" placeholder="test1234">
-        <button onclick="signUp()">サインアップ</button>
-        <button onclick="signIn()">ログイン</button>
-        <button onclick="checkUser()">ユーザー状態確認</button>
+        <button onclick="signUp()" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">サインアップ</button>
+        <button onclick="signIn()" class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">ログイン</button>
+        <button onclick="checkUser()" class="w-full bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">ユーザー状態確認</button>
     </div>
     
     <div id="user-info" style="display:none;">
@@ -122,5 +124,6 @@
             }
         })
     </script>
+    </div>
 </body>
 </html>
