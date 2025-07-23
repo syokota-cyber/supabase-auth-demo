@@ -167,3 +167,80 @@ git push
 - **データベース操作**: CRUD操作の理解
 - **モダンCSS**: Tailwindによる効率的デザイン実装  
 - **フルスタック理解**: フロントエンド→API→データベースの全体像把握
+
+---
+
+## 🚀 TODOアプリ拡張計画（2025年7月24日〜）
+
+### 📊 開発ロードマップ
+
+#### Phase 1: 基本拡張（7/24-25）
+- [ ] カテゴリ機能（仕事/プライベート/買い物）
+- [ ] 優先度設定（高/中/低）  
+- [ ] 期限設定機能
+- [ ] リッチなダッシュボードUI
+
+#### Phase 2: 中級機能（7/26-28）
+- [ ] 検索・フィルタ機能
+- [ ] タグシステム
+- [ ] 統計ダッシュボード（グラフ表示）
+- [ ] インタラクティブなアニメーション
+
+#### Phase 3: メモ共有への橋渡し（7/29-31）
+- [ ] メモ欄追加（Markdown対応）
+- [ ] 共有機能の基礎
+- [ ] 公開/非公開設定
+
+### 🎨 UI/UXデザイン方針
+- **ダッシュボード**: カード型レイアウト、統計グラフ、アニメーション効果
+- **インタラクティブ性**: ホバー効果、スムーズな遷移、ドラッグ&ドロップ
+- **レスポンシブ**: モバイル最適化
+- **カラーテーマ**: ダークモード対応検討
+
+### 🗄️ DB拡張設計
+```sql
+-- Phase 1で追加予定
+ALTER TABLE todos ADD COLUMN category TEXT DEFAULT 'general';
+ALTER TABLE todos ADD COLUMN priority INTEGER DEFAULT 2;
+ALTER TABLE todos ADD COLUMN due_date TIMESTAMP;
+
+-- Phase 2で追加予定
+CREATE TABLE tags (
+  id SERIAL PRIMARY KEY,
+  name TEXT UNIQUE
+);
+
+CREATE TABLE todo_tags (
+  todo_id INTEGER REFERENCES todos(id),
+  tag_id INTEGER REFERENCES tags(id)
+);
+
+-- Phase 3で追加予定
+ALTER TABLE todos ADD COLUMN notes TEXT;
+ALTER TABLE todos ADD COLUMN is_public BOOLEAN DEFAULT false;
+```
+
+### 🔄 今後の発展計画
+1. **初級**: TODOアプリ拡張 → メモ共有アプリ
+2. **中級**: アンケートシステム → 家計簿アプリ
+3. **上級**: チャットアプリ → SNS機能
+
+### 📝 再開時のコマンド
+```bash
+# プロジェクトディレクトリへ移動
+cd /Users/syokota_mac/Desktop/claude-code/learning-projects/supabase-auth-demo
+
+# 現在の状態確認
+git status
+
+# ローカルサーバー起動（必要に応じて）
+npm run dev
+
+# 本番環境確認
+open https://supabase-auth-demo-three.vercel.app/
+```
+
+### 🎯 明日（7/24）の開始タスク
+1. カテゴリ機能のDB設計とUI実装
+2. ダッシュボードのリッチUI設計
+3. Tailwindでのアニメーション実装開始
