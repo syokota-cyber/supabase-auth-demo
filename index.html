@@ -205,6 +205,10 @@
                             class="ml-2 px-3 py-1 text-sm rounded ${todo.complete ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'} text-white">
                         ${todo.complete ? '未完了' : '完了'}
                     </button>
+                    <button onclick="deleteTodo(${todo.id})" 
+                            class="ml-2 px-3 py-1 text-sm rounded bg-red-500 hover:bg-red-600 text-white">
+                        削除
+                    </button>
                 `
                 todoList.appendChild(todoItem)
             })
@@ -215,6 +219,24 @@
             const { data, error } = await supabase
                 .from('todos')
                 .update({ complete: completed })
+                .eq('id', id)
+            
+            if (error) {
+                alert('エラー: ' + error.message)
+            } else {
+                loadTodos()
+            }
+        }
+
+        // TODO削除関数
+        async function deleteTodo(id) {
+            if (!confirm('このTODOを削除しますか？')) {
+                return
+            }
+            
+            const { data, error } = await supabase
+                .from('todos')
+                .delete()
                 .eq('id', id)
             
             if (error) {
