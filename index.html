@@ -8,11 +8,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="max-w-md w-full space-y-8 p-8">
+    <div class="max-w-4xl w-full space-y-8 p-8">
         <h1 class="text-3xl font-bold text-center text-gray-900">Supabase 認証テスト</h1>
     
     <div id="auth-form" class="bg-white p-8 rounded-lg shadow-md">
         <h2 class="text-xl font-semibold text-gray-700 mb-6">ログイン/サインアップ</h2>
+        <div id="message" class="text-sm mb-4"></div>
         <div class="space-y-4">
             <input type="email" id="email" placeholder="test@example.com" 
                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -27,7 +28,28 @@
     
     <div id="user-info" style="display:none;" class="bg-white p-8 rounded-lg shadow-md">
         <div class="mb-6">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">ダッシュボード</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">ダッシュボード</h2>
+            
+            <!-- 統計カード -->
+            <div class="grid grid-cols-4 gap-4 mb-6">
+                <div class="bg-gradient-to-br from-blue-400 to-blue-600 p-4 rounded-lg text-white transform hover:scale-105 transition-transform duration-200 shadow-lg">
+                    <div class="text-2xl font-bold" id="total-todos">0</div>
+                    <div class="text-sm opacity-80">総TODO数</div>
+                </div>
+                <div class="bg-gradient-to-br from-green-400 to-green-600 p-4 rounded-lg text-white transform hover:scale-105 transition-transform duration-200 shadow-lg">
+                    <div class="text-2xl font-bold" id="completed-todos">0</div>
+                    <div class="text-sm opacity-80">完了済み</div>
+                </div>
+                <div class="bg-gradient-to-br from-red-400 to-red-600 p-4 rounded-lg text-white transform hover:scale-105 transition-transform duration-200 shadow-lg">
+                    <div class="text-2xl font-bold" id="overdue-todos">0</div>
+                    <div class="text-sm opacity-80">期限切れ</div>
+                </div>
+                <div class="bg-gradient-to-br from-purple-400 to-purple-600 p-4 rounded-lg text-white transform hover:scale-105 transition-transform duration-200 shadow-lg">
+                    <div class="text-2xl font-bold" id="high-priority-todos">0</div>
+                    <div class="text-sm opacity-80">高優先度</div>
+                </div>
+            </div>
+            
             <div class="bg-blue-50 p-4 rounded-lg mb-4">
                 <p id="user-email" class="text-gray-700 font-medium"></p>
                 <p id="user-created" class="text-gray-500 text-sm mt-1"></p>
@@ -39,10 +61,24 @@
         <!-- TODO入力フォーム -->
         <div class="mb-6">
             <h3 class="text-lg font-semibold text-gray-700 mb-3">新しいTODO</h3>
-            <div class="flex space-x-2">
+            <div class="space-y-2">
                 <input type="text" id="todo-input" placeholder="TODOを入力..." 
-                       class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <button onclick="addTodo()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">追加</button>
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="flex space-x-2">
+                    <select id="todo-category" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="general">一般</option>
+                        <option value="work">仕事</option>
+                        <option value="private">プライベート</option>
+                        <option value="shopping">買い物</option>
+                    </select>
+                    <select id="todo-priority" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="3">高</option>
+                        <option value="2" selected>中</option>
+                        <option value="1">低</option>
+                    </select>
+                    <input type="date" id="todo-due-date" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button onclick="addTodo()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">追加</button>
+                </div>
             </div>
         </div>
         
@@ -59,26 +95,63 @@
         // Supabaseクライアントの初期化
         const supabaseUrl = 'https://quxokigryvzksexhbpbm.supabase.co'
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1eG9raWdyeXZ6a3NleGhicGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxNTY5MTEsImV4cCI6MjA2ODczMjkxMX0.OEVIN34m7pnhrGO9tZ8wBxHNaNL7OCC0REpQOs6JjAQ'
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey)
+        
+        // 完全にクリーンなSupabaseクライアント
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
+            auth: {
+                detectSessionInUrl: false,
+                persistSession: false,
+                autoRefreshToken: false,
+                flowType: 'implicit'
+            },
+            global: {
+                headers: {
+                    'x-custom-header': 'local-dev'
+                }
+            }
+        })
 
         // サインアップ関数
         async function signUp() {
             const email = document.getElementById('email').value
             const password = document.getElementById('password').value
             
+            // メッセージをクリア
+            hideMessage()
+            
+            console.log('現在のURL:', window.location.origin)
+            console.log('サインアップリクエスト開始')
+            
             const { data, error } = await supabase.auth.signUp({
                 email: email,
-                password: password,
-                options: {
-                    emailRedirectTo: window.location.origin
-                }
+                password: password
             })
             
+            console.log('サインアップレスポンス:', { data, error })
+            
             if (error) {
-                alert('エラー: ' + error.message)
+                console.error('サインアップエラー詳細:', error)
+                showMessage('エラー: ' + error.message, true)
             } else {
-                alert('サインアップ成功！メールを確認してください')
+                showMessage('サインアップ成功！メールを確認してください', false)
+                // 3秒後にメッセージを消す
+                setTimeout(hideMessage, 3000)
             }
+        }
+
+        // メッセージ表示関数（エラーと成功両方に対応）
+        function showMessage(message, isError = true) {
+            const messageDiv = document.getElementById('message')
+            messageDiv.textContent = message
+            messageDiv.className = isError ? 'text-red-500 text-sm mb-4' : 'text-green-500 text-sm mb-4'
+            messageDiv.style.display = 'block'
+        }
+        
+        // メッセージ非表示関数
+        function hideMessage() {
+            const messageDiv = document.getElementById('message')
+            messageDiv.textContent = ''
+            messageDiv.style.display = 'none'
         }
 
         // ログイン関数
@@ -86,20 +159,12 @@
             const email = document.getElementById('email').value
             const password = document.getElementById('password').value
             
+            // メッセージをクリア
+            hideMessage()
+            
             console.log('ログイン試行:', email)
             
-            // まずサインアップを試みる（既に存在する場合はエラーになる）
-            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-                email: email,
-                password: password,
-                options: {
-                    data: {
-                        skip_confirmation: true
-                    }
-                }
-            })
-            
-            // その後ログインを試みる
+            // ログインのみを実行
             const { data, error } = await supabase.auth.signInWithPassword({
                 email: email,
                 password: password
@@ -108,7 +173,8 @@
             console.log('ログイン結果:', { data, error })
             
             if (error) {
-                alert('エラー: ' + error.message)
+                console.error('詳細なエラー情報:', error)
+                showMessage('エラー: ' + error.message, true)
             } else {
                 showUserInfo(data.user)
             }
@@ -133,6 +199,21 @@
             loadTodos()
         }
 
+        // 統計情報更新関数
+        function updateStats(todos) {
+            const total = todos.length
+            const completed = todos.filter(todo => todo.complete).length
+            const overdue = todos.filter(todo => 
+                todo.due_date && new Date(todo.due_date) < new Date() && !todo.complete
+            ).length
+            const highPriority = todos.filter(todo => todo.priority === 3).length
+            
+            document.getElementById('total-todos').textContent = total
+            document.getElementById('completed-todos').textContent = completed
+            document.getElementById('overdue-todos').textContent = overdue
+            document.getElementById('high-priority-todos').textContent = highPriority
+        }
+
         // ユーザー情報非表示
         function hideUserInfo() {
             document.getElementById('auth-form').style.display = 'block'
@@ -154,7 +235,13 @@
         // TODO追加関数
         async function addTodo() {
             const todoInput = document.getElementById('todo-input')
+            const categorySelect = document.getElementById('todo-category')
+            const prioritySelect = document.getElementById('todo-priority')
+            const dueDateInput = document.getElementById('todo-due-date')
             const title = todoInput.value.trim()
+            const category = categorySelect.value
+            const priority = parseInt(prioritySelect.value)
+            const dueDate = dueDateInput.value || null
             
             if (!title) {
                 alert('TODOを入力してください')
@@ -166,13 +253,14 @@
             const { data, error } = await supabase
                 .from('todos')
                 .insert([
-                    { user_id: user.id, title: title, complete: false }
+                    { user_id: user.id, title: title, category: category, priority: priority, due_date: dueDate, complete: false }
                 ])
             
             if (error) {
                 alert('エラー: ' + error.message)
             } else {
                 todoInput.value = ''
+                dueDateInput.value = ''
                 loadTodos()
             }
         }
@@ -185,6 +273,7 @@
                 .from('todos')
                 .select('*')
                 .eq('user_id', user.id)
+                .order('priority', { ascending: false })
                 .order('created_at', { ascending: false })
             
             if (error) {
@@ -195,10 +284,43 @@
             const todoList = document.getElementById('todo-list')
             todoList.innerHTML = ''
             
+            // 統計情報を更新
+            updateStats(todos)
+            
             todos.forEach(todo => {
+                const categoryColors = {
+                    'general': 'bg-gray-100 text-gray-700',
+                    'work': 'bg-blue-100 text-blue-700',
+                    'private': 'bg-green-100 text-green-700',
+                    'shopping': 'bg-purple-100 text-purple-700'
+                }
+                const categoryNames = {
+                    'general': '一般',
+                    'work': '仕事',
+                    'private': 'プライベート',
+                    'shopping': '買い物'
+                }
+                const priorityColors = {
+                    3: 'bg-red-100 text-red-700',
+                    2: 'bg-yellow-100 text-yellow-700', 
+                    1: 'bg-green-100 text-green-700'
+                }
+                const priorityNames = { 3: '高', 2: '中', 1: '低' }
+                
+                // 期限判定
+                const isOverdue = todo.due_date && new Date(todo.due_date) < new Date() && !todo.complete
+                const dueDateStr = todo.due_date ? new Date(todo.due_date).toLocaleDateString('ja-JP') : ''
+                
                 const todoItem = document.createElement('div')
-                todoItem.className = 'flex items-center p-3 bg-gray-50 rounded-md'
+                todoItem.className = `flex items-center p-3 rounded-md ${isOverdue ? 'bg-red-50 border-l-4 border-red-400' : 'bg-gray-50'}`
                 todoItem.innerHTML = `
+                    <span class="px-2 py-1 text-xs rounded-full ${priorityColors[todo.priority] || priorityColors[2]} mr-2">
+                        ${priorityNames[todo.priority] || '中'}
+                    </span>
+                    <span class="px-2 py-1 text-xs rounded-full ${categoryColors[todo.category] || categoryColors.general} mr-2">
+                        ${categoryNames[todo.category] || 'その他'}
+                    </span>
+                    ${dueDateStr ? `<span class="px-2 py-1 text-xs rounded ${isOverdue ? 'bg-red-200 text-red-800' : 'bg-blue-100 text-blue-700'} mr-2">📅${dueDateStr}</span>` : ''}
                     <span class="flex-1 ${todo.complete ? 'line-through text-gray-500' : 'text-gray-800'}">${todo.title}</span>
                     <button onclick="toggleTodo(${todo.id}, ${!todo.complete})" 
                             class="ml-2 px-3 py-1 text-sm rounded ${todo.complete ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'} text-white">
