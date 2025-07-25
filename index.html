@@ -6,6 +6,7 @@
     <title>Supabase認証デモ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
     <div class="max-w-4xl w-full space-y-8 p-8">
@@ -50,6 +51,18 @@
                 </div>
             </div>
             
+            <!-- グラフ表示エリア -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">カテゴリ別TODO</h4>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">優先度別TODO</h4>
+                    <canvas id="priorityChart"></canvas>
+                </div>
+            </div>
+            
             <div class="bg-blue-50 p-4 rounded-lg mb-4">
                 <p id="user-email" class="text-gray-700 font-medium"></p>
                 <p id="user-created" class="text-gray-500 text-sm mt-1"></p>
@@ -82,6 +95,30 @@
             </div>
         </div>
         
+        <!-- 検索・フィルタセクション -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-3">検索・フィルタ</h3>
+            <div class="bg-gray-50 p-4 rounded-lg space-y-3">
+                <input type="text" id="search-input" placeholder="TODOを検索..." 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="flex space-x-2">
+                    <select id="filter-category" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">すべてのカテゴリ</option>
+                        <option value="general">一般</option>
+                        <option value="work">仕事</option>
+                        <option value="private">プライベート</option>
+                        <option value="shopping">買い物</option>
+                    </select>
+                    <select id="filter-priority" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">すべての優先度</option>
+                        <option value="3">高</option>
+                        <option value="2">中</option>
+                        <option value="1">低</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
         <!-- TODOリスト表示 -->
         <div class="mb-6">
             <h3 class="text-lg font-semibold text-gray-700 mb-3">TODOリスト</h3>
@@ -95,6 +132,16 @@
         // Supabaseクライアントの初期化
         const supabaseUrl = 'https://quxokigryvzksexhbpbm.supabase.co'
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1eG9raWdyeXZ6a3NleGhicGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxNTY5MTEsImV4cCI6MjA2ODczMjkxMX0.OEVIN34m7pnhrGO9tZ8wBxHNaNL7OCC0REpQOs6JjAQ'
+        
+        // TODOデータを保持する変数
+        let allTodos = []
+        
+        // グラフインスタンスを保持する変数
+        let categoryChart = null
+        let priorityChart = null
+        
+        // ドラッグ中のTODO IDを保持
+        let draggedTodoId = null
         
         // 完全にクリーンなSupabaseクライアント
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
@@ -212,6 +259,66 @@
             document.getElementById('completed-todos').textContent = completed
             document.getElementById('overdue-todos').textContent = overdue
             document.getElementById('high-priority-todos').textContent = highPriority
+            
+            // グラフも更新
+            updateCharts(todos)
+        }
+        
+        // グラフデータ集計関数
+        function updateCharts(todos) {
+            // カテゴリ別集計
+            const categoryData = {
+                general: todos.filter(t => t.category === 'general').length,
+                work: todos.filter(t => t.category === 'work').length,
+                private: todos.filter(t => t.category === 'private').length,
+                shopping: todos.filter(t => t.category === 'shopping').length
+            }
+            
+            // 優先度別集計
+            const priorityData = {
+                high: todos.filter(t => t.priority === 3).length,
+                medium: todos.filter(t => t.priority === 2).length,
+                low: todos.filter(t => t.priority === 1).length
+            }
+            
+            // グラフを描画
+            drawCharts(categoryData, priorityData)
+        }
+        
+        // グラフ描画関数
+        function drawCharts(categoryData, priorityData) {
+            // 既存のグラフがあれば削除
+            if (categoryChart) categoryChart.destroy()
+            if (priorityChart) priorityChart.destroy()
+            
+            // カテゴリ別円グラフ
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d')
+            categoryChart = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['一般', '仕事', 'プライベート', '買い物'],
+                    datasets: [{
+                        data: [categoryData.general, categoryData.work, categoryData.private, categoryData.shopping],
+                        backgroundColor: ['#9CA3AF', '#3B82F6', '#10B981', '#8B5CF6']
+                    }]
+                }
+            })
+            
+            // 優先度別棒グラフ
+            const priorityCtx = document.getElementById('priorityChart').getContext('2d')
+            priorityChart = new Chart(priorityCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['高', '中', '低'],
+                    datasets: [{
+                        data: [priorityData.high, priorityData.medium, priorityData.low],
+                        backgroundColor: ['#EF4444', '#F59E0B', '#10B981']
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } }
+                }
+            })
         }
 
         // ユーザー情報非表示
@@ -281,6 +388,15 @@
                 return
             }
             
+            // データを保存
+            allTodos = todos
+            
+            // 表示を更新
+            displayTodos(todos)
+        }
+        
+        // TODOを表示する関数
+        function displayTodos(todos) {
             const todoList = document.getElementById('todo-list')
             todoList.innerHTML = ''
             
@@ -312,7 +428,15 @@
                 const dueDateStr = todo.due_date ? new Date(todo.due_date).toLocaleDateString('ja-JP') : ''
                 
                 const todoItem = document.createElement('div')
-                todoItem.className = `flex items-center p-3 rounded-md ${isOverdue ? 'bg-red-50 border-l-4 border-red-400' : 'bg-gray-50'}`
+                todoItem.className = `flex items-center p-3 rounded-md ${isOverdue ? 'bg-red-50 border-l-4 border-red-400' : 'bg-gray-50'} cursor-move`
+                todoItem.draggable = true
+                todoItem.dataset.todoId = todo.id
+                
+                // ドラッグイベントを追加
+                todoItem.addEventListener('dragstart', handleDragStart)
+                todoItem.addEventListener('dragover', handleDragOver)
+                todoItem.addEventListener('drop', handleDrop)
+                todoItem.addEventListener('dragend', handleDragEnd)
                 todoItem.innerHTML = `
                     <span class="px-2 py-1 text-xs rounded-full ${priorityColors[todo.priority] || priorityColors[2]} mr-2">
                         ${priorityNames[todo.priority] || '中'}
@@ -323,11 +447,13 @@
                     ${dueDateStr ? `<span class="px-2 py-1 text-xs rounded ${isOverdue ? 'bg-red-200 text-red-800' : 'bg-blue-100 text-blue-700'} mr-2">📅${dueDateStr}</span>` : ''}
                     <span class="flex-1 ${todo.complete ? 'line-through text-gray-500' : 'text-gray-800'}">${todo.title}</span>
                     <button onclick="toggleTodo(${todo.id}, ${!todo.complete})" 
-                            class="ml-2 px-3 py-1 text-sm rounded ${todo.complete ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'} text-white">
+                            class="ml-2 px-3 py-1 text-sm rounded ${todo.complete ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'} text-white"
+                            draggable="false">
                         ${todo.complete ? '未完了' : '完了'}
                     </button>
                     <button onclick="deleteTodo(${todo.id})" 
-                            class="ml-2 px-3 py-1 text-sm rounded bg-red-500 hover:bg-red-600 text-white">
+                            class="ml-2 px-3 py-1 text-sm rounded bg-red-500 hover:bg-red-600 text-white"
+                            draggable="false">
                         削除
                     </button>
                 `
@@ -367,12 +493,81 @@
             }
         }
 
+        // 検索機能
+        function filterTodos() {
+            const searchText = document.getElementById('search-input').value.toLowerCase()
+            const filterCategory = document.getElementById('filter-category').value
+            const filterPriority = document.getElementById('filter-priority').value
+            
+            const filteredTodos = allTodos.filter(todo => {
+                // テキスト検索
+                const matchesSearch = todo.title.toLowerCase().includes(searchText)
+                
+                // カテゴリフィルタ
+                const matchesCategory = !filterCategory || todo.category === filterCategory
+                
+                // 優先度フィルタ
+                const matchesPriority = !filterPriority || todo.priority === parseInt(filterPriority)
+                
+                // すべての条件を満たすものだけを返す
+                return matchesSearch && matchesCategory && matchesPriority
+            })
+            
+            displayTodos(filteredTodos)
+        }
+        
+        // ドラッグ開始処理
+        function handleDragStart(event) {
+            draggedTodoId = event.target.dataset.todoId
+            event.target.style.opacity = '0.5'
+        }
+        
+        // ドラッグオーバー処理（ドロップを許可）
+        function handleDragOver(event) {
+            event.preventDefault()
+        }
+        
+        // ドロップ処理
+        function handleDrop(event) {
+            event.preventDefault()
+            const dropTargetId = event.target.closest('[data-todo-id]').dataset.todoId
+            
+            if (draggedTodoId && dropTargetId && draggedTodoId !== dropTargetId) {
+                // 配列内で位置を入れ替え
+                swapTodoPositions(parseInt(draggedTodoId), parseInt(dropTargetId))
+            }
+        }
+        
+        // TODO位置入れ替え関数
+        function swapTodoPositions(draggedId, targetId) {
+            const draggedIndex = allTodos.findIndex(todo => todo.id === draggedId)
+            const targetIndex = allTodos.findIndex(todo => todo.id === targetId)
+            
+            if (draggedIndex !== -1 && targetIndex !== -1) {
+                // 配列内で位置を交換
+                [allTodos[draggedIndex], allTodos[targetIndex]] = [allTodos[targetIndex], allTodos[draggedIndex]]
+                // 表示を更新
+                displayTodos(allTodos)
+            }
+        }
+        
+        // ドラッグ終了処理
+        function handleDragEnd(event) {
+            event.target.style.opacity = '1'
+            draggedTodoId = null
+        }
+        
         // ページ読み込み時にセッション確認
         window.addEventListener('load', async () => {
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
                 showUserInfo(user)
             }
+            
+            // 検索ボックスにイベントリスナーを追加
+            document.getElementById('search-input').addEventListener('input', filterTodos)
+            document.getElementById('filter-category').addEventListener('change', filterTodos)
+            document.getElementById('filter-priority').addEventListener('change', filterTodos)
         })
     </script>
     </div>
