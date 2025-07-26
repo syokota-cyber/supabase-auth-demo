@@ -18,12 +18,123 @@
         <div class="space-y-4">
             <input type="email" id="email" placeholder="test@example.com" 
                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <input type="password" id="password" placeholder="test1234"
-                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="relative">
+                <input type="password" id="password" placeholder="test1234"
+                       class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="button" onclick="togglePasswordVisibility()" 
+                        class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600 hover:text-gray-800">
+                    <span id="password-toggle-icon">👁️</span>
+                </button>
+            </div>
         </div>
         <div class="space-y-2 mt-6">
-        <button onclick="signUp()" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">サインアップ</button>
-        <button onclick="signIn()" class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">ログイン</button>
+        <button id="signup-button" onclick="signUp()" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">サインアップ</button>
+        <button id="signin-button" onclick="signIn()" class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">ログイン</button>
+        <div class="text-center mt-4">
+            <a href="#" onclick="openResetModal()" class="text-blue-600 hover:text-blue-800 text-sm">パスワードを忘れた方はこちら</a>
+        </div>
+        </div>
+    </div>
+    
+    <!-- パスワードリセットモーダル -->
+    <div id="reset-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+            <h3 class="text-xl font-semibold text-gray-700 mb-4">パスワードリセット</h3>
+            <div id="reset-message" class="text-sm mb-4"></div>
+            
+            <!-- メール送信フォーム -->
+            <div id="reset-email-form">
+                <p class="text-gray-600 mb-4">登録したメールアドレスに、パスワードリセット用のリンクを送信します。</p>
+                <input type="email" id="reset-email" placeholder="メールアドレス" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+                <div class="flex space-x-2">
+                    <button onclick="sendResetEmail()" 
+                            id="send-reset-button"
+                            class="flex-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+                        送信
+                    </button>
+                    <button onclick="closeResetModal()" 
+                            class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded">
+                        キャンセル
+                    </button>
+                </div>
+            </div>
+            
+            <!-- パスワード更新フォーム（メールのリンクから開いた時用） -->
+            <div id="update-password-form" style="display:none;">
+                <p class="text-gray-600 mb-4">新しいパスワードを入力してください。</p>
+                <input type="password" id="new-password" placeholder="新しいパスワード（6文字以上）" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+                <input type="password" id="confirm-password" placeholder="パスワード確認" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+                <div class="flex space-x-2">
+                    <button onclick="updatePassword()" 
+                            id="update-password-button"
+                            class="flex-1 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+                        パスワード更新
+                    </button>
+                    <button onclick="closeResetModal()" 
+                            class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded">
+                        キャンセル
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- プロフィール編集モーダル -->
+    <div id="profile-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+            <h3 class="text-xl font-semibold text-gray-700 mb-4">プロフィール編集</h3>
+            <div id="profile-message" class="text-sm mb-4"></div>
+            
+            <div class="space-y-4">
+                <!-- アバター選択 -->
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center text-3xl mx-auto mb-2 border-2 border-gray-300">
+                        <img id="profile-avatar-preview-img" src="" alt="Avatar" class="w-full h-full object-cover hidden">
+                        <span id="profile-avatar-preview-text">👤</span>
+                    </div>
+                    <label class="text-sm text-blue-600 cursor-pointer hover:text-blue-800">
+                        画像を選択
+                        <input type="file" id="avatar-input" accept="image/*" class="hidden">
+                    </label>
+                    <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF (最大2MB)</p>
+                </div>
+                
+                <!-- 表示名 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">表示名</label>
+                    <input type="text" id="profile-display-name" placeholder="表示名を入力" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <!-- 自己紹介 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">自己紹介</label>
+                    <textarea id="profile-bio" placeholder="自己紹介を入力" rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                
+                <!-- ウェブサイト -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ウェブサイト</label>
+                    <input type="url" id="profile-website" placeholder="https://example.com" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            
+            <div class="flex space-x-2 mt-6">
+                <button onclick="saveProfile()" 
+                        id="save-profile-button"
+                        class="flex-1 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+                    保存
+                </button>
+                <button onclick="closeProfileModal()" 
+                        class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded">
+                    キャンセル
+                </button>
+            </div>
         </div>
     </div>
     
@@ -63,10 +174,33 @@
                 </div>
             </div>
             
-            <div class="bg-blue-50 p-4 rounded-lg mb-4">
-                <p id="user-email" class="text-gray-700 font-medium"></p>
-                <p id="user-created" class="text-gray-500 text-sm mt-1"></p>
-                <p id="user-last-signin" class="text-gray-500 text-sm"></p>
+            <div class="bg-blue-50 p-6 rounded-lg mb-4">
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="w-16 h-16 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center text-2xl border-2 border-gray-300">
+                        <img id="user-avatar-img" src="" alt="Avatar" class="w-full h-full object-cover hidden">
+                        <span id="user-avatar-text">👤</span>
+                    </div>
+                    <div class="flex-1">
+                        <h3 id="user-display-name" class="text-xl font-semibold text-gray-800">ユーザー名</h3>
+                        <p id="user-email" class="text-gray-600"></p>
+                    </div>
+                    <button onclick="openProfileModal()" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+                        プロフィール編集
+                    </button>
+                </div>
+                <div class="border-t pt-4 space-y-2">
+                    <p id="user-bio" class="text-gray-700 text-sm italic">自己紹介がありません</p>
+                    <div class="grid grid-cols-2 gap-4 text-xs text-gray-500">
+                        <div>
+                            <strong>登録日:</strong>
+                            <span id="user-created"></span>
+                        </div>
+                        <div>
+                            <strong>最終ログイン:</strong>
+                            <span id="user-last-signin"></span>
+                        </div>
+                    </div>
+                </div>
             </div>
             <button onclick="signOut()" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">ログアウト</button>
         </div>
@@ -163,26 +297,52 @@
             const email = document.getElementById('email').value
             const password = document.getElementById('password').value
             
+            // 入力チェック
+            if (!email || !password) {
+                showMessage('メールアドレスとパスワードを入力してください', true)
+                return
+            }
+            
+            // メールアドレスの形式チェック
+            if (!isValidEmail(email)) {
+                showMessage('正しいメールアドレスの形式で入力してください', true)
+                return
+            }
+            
+            // パスワードの長さチェック
+            if (password.length < 6) {
+                showMessage('パスワードは6文字以上で入力してください', true)
+                return
+            }
+            
             // メッセージをクリア
             hideMessage()
             
-            console.log('現在のURL:', window.location.origin)
-            console.log('サインアップリクエスト開始')
+            // ローディング開始
+            setLoading(true)
             
-            const { data, error } = await supabase.auth.signUp({
-                email: email,
-                password: password
-            })
-            
-            console.log('サインアップレスポンス:', { data, error })
-            
-            if (error) {
-                console.error('サインアップエラー詳細:', error)
-                showMessage('エラー: ' + error.message, true)
-            } else {
-                showMessage('サインアップ成功！メールを確認してください', false)
-                // 3秒後にメッセージを消す
-                setTimeout(hideMessage, 3000)
+            try {
+                console.log('現在のURL:', window.location.origin)
+                console.log('サインアップリクエスト開始')
+                
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: password
+                })
+                
+                console.log('サインアップレスポンス:', { data, error })
+                
+                if (error) {
+                    console.error('サインアップエラー詳細:', error)
+                    showMessage('エラー: ' + error.message, true)
+                } else {
+                    showMessage('サインアップ成功！メールを確認してください', false)
+                    // 3秒後にメッセージを消す
+                    setTimeout(hideMessage, 3000)
+                }
+            } finally {
+                // ローディング終了
+                setLoading(false)
             }
         }
 
@@ -200,30 +360,451 @@
             messageDiv.textContent = ''
             messageDiv.style.display = 'none'
         }
+        
+        // ローディング状態の管理
+        function setLoading(isLoading) {
+            const signupButton = document.getElementById('signup-button')
+            const signinButton = document.getElementById('signin-button')
+            
+            if (isLoading) {
+                signupButton.disabled = true
+                signinButton.disabled = true
+                signupButton.textContent = '処理中...'
+                signinButton.textContent = '処理中...'
+            } else {
+                signupButton.disabled = false
+                signinButton.disabled = false
+                signupButton.textContent = 'サインアップ'
+                signinButton.textContent = 'ログイン'
+            }
+        }
+        
+        // メールアドレスの形式チェック
+        function isValidEmail(email) {
+            // 基本的なメール形式のパターン
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            return emailPattern.test(email)
+        }
+        
+        // パスワードの表示/非表示切り替え
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password')
+            const toggleIcon = document.getElementById('password-toggle-icon')
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text'
+                toggleIcon.textContent = '🙈'
+            } else {
+                passwordInput.type = 'password'
+                toggleIcon.textContent = '👁️'
+            }
+        }
+        
+        // リセットモーダルを開く
+        function openResetModal() {
+            const modal = document.getElementById('reset-modal')
+            modal.classList.remove('hidden')
+            document.getElementById('reset-email').value = ''
+            hideResetMessage()
+        }
+        
+        // リセットモーダルを閉じる
+        function closeResetModal() {
+            const modal = document.getElementById('reset-modal')
+            modal.classList.add('hidden')
+            hideResetMessage()
+        }
+        
+        // リセットメッセージ表示
+        function showResetMessage(message, isError = true) {
+            const messageDiv = document.getElementById('reset-message')
+            messageDiv.textContent = message
+            messageDiv.className = isError ? 'text-red-500 text-sm mb-4' : 'text-green-500 text-sm mb-4'
+            messageDiv.style.display = 'block'
+        }
+        
+        // リセットメッセージ非表示
+        function hideResetMessage() {
+            const messageDiv = document.getElementById('reset-message')
+            messageDiv.textContent = ''
+            messageDiv.style.display = 'none'
+        }
+        
+        // パスワードリセットメール送信
+        async function sendResetEmail() {
+            const email = document.getElementById('reset-email').value
+            
+            // 入力チェック
+            if (!email) {
+                showResetMessage('メールアドレスを入力してください', true)
+                return
+            }
+            
+            // メールアドレスの形式チェック
+            if (!isValidEmail(email)) {
+                showResetMessage('正しいメールアドレスの形式で入力してください', true)
+                return
+            }
+            
+            // ローディング開始
+            const sendButton = document.getElementById('send-reset-button')
+            sendButton.disabled = true
+            sendButton.textContent = '送信中...'
+            
+            try {
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + '/index.html'
+                })
+                
+                if (error) {
+                    console.error('リセットメール送信エラー:', error)
+                    showResetMessage('エラー: ' + error.message, true)
+                } else {
+                    showResetMessage('パスワードリセットメールを送信しました。メールをご確認ください。', false)
+                    // 5秒後にモーダルを閉じる
+                    setTimeout(() => {
+                        closeResetModal()
+                    }, 5000)
+                }
+            } finally {
+                // ローディング終了
+                sendButton.disabled = false
+                sendButton.textContent = '送信'
+            }
+        }
+        
+        // パスワード更新機能
+        async function updatePassword() {
+            const newPassword = document.getElementById('new-password').value
+            const confirmPassword = document.getElementById('confirm-password').value
+            
+            // 入力チェック
+            if (!newPassword || !confirmPassword) {
+                showResetMessage('パスワードを入力してください', true)
+                return
+            }
+            
+            // パスワードの長さチェック
+            if (newPassword.length < 6) {
+                showResetMessage('パスワードは6文字以上で入力してください', true)
+                return
+            }
+            
+            // パスワード確認チェック
+            if (newPassword !== confirmPassword) {
+                showResetMessage('パスワードが一致しません', true)
+                return
+            }
+            
+            // ローディング開始
+            const updateButton = document.getElementById('update-password-button')
+            updateButton.disabled = true
+            updateButton.textContent = '更新中...'
+            
+            try {
+                const { error } = await supabase.auth.updateUser({
+                    password: newPassword
+                })
+                
+                if (error) {
+                    console.error('パスワード更新エラー:', error)
+                    showResetMessage('エラー: ' + error.message, true)
+                } else {
+                    showResetMessage('パスワードが正常に更新されました！', false)
+                    // 3秒後にモーダルを閉じてメインページを表示
+                    setTimeout(() => {
+                        closeResetModal()
+                        location.reload() // ページをリロードしてログイン状態を反映
+                    }, 3000)
+                }
+            } finally {
+                // ローディング終了
+                updateButton.disabled = false
+                updateButton.textContent = 'パスワード更新'
+            }
+        }
+        
+        // プロフィールモーダル関連の関数
+        function openProfileModal() {
+            const modal = document.getElementById('profile-modal')
+            modal.classList.remove('hidden')
+            loadCurrentProfile()
+            hideProfileMessage()
+        }
+        
+        function closeProfileModal() {
+            const modal = document.getElementById('profile-modal')
+            modal.classList.add('hidden')
+            hideProfileMessage()
+        }
+        
+        // プロフィールメッセージ表示
+        function showProfileMessage(message, isError = true) {
+            const messageDiv = document.getElementById('profile-message')
+            messageDiv.textContent = message
+            messageDiv.className = isError ? 'text-red-500 text-sm mb-4' : 'text-green-500 text-sm mb-4'
+            messageDiv.style.display = 'block'
+        }
+        
+        // プロフィールメッセージ非表示
+        function hideProfileMessage() {
+            const messageDiv = document.getElementById('profile-message')
+            messageDiv.textContent = ''
+            messageDiv.style.display = 'none'
+        }
+        
+        // 現在のプロフィール情報を読み込み
+        async function loadCurrentProfile() {
+            try {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user && user.user_metadata) {
+                    const metadata = user.user_metadata
+                    
+                    // フォームに現在の値を設定
+                    document.getElementById('profile-display-name').value = metadata.display_name || ''
+                    document.getElementById('profile-bio').value = metadata.bio || ''
+                    document.getElementById('profile-website').value = metadata.website || ''
+                    
+                    // アバタープレビューを更新
+                    const previewImg = document.getElementById('profile-avatar-preview-img')
+                    const previewText = document.getElementById('profile-avatar-preview-text')
+                    
+                    if (metadata.avatar_type === 'image' && metadata.avatar) {
+                        previewImg.src = metadata.avatar
+                        previewImg.classList.remove('hidden')
+                        previewText.classList.add('hidden')
+                        window.selectedAvatarData = metadata.avatar
+                    } else {
+                        previewText.textContent = metadata.avatar || '👤'
+                        previewImg.classList.add('hidden')
+                        previewText.classList.remove('hidden')
+                        window.selectedAvatarData = null
+                    }
+                }
+            } catch (error) {
+                console.error('プロフィール読み込みエラー:', error)
+            }
+        }
+        
+        // プロフィール保存機能
+        async function saveProfile() {
+            const displayName = document.getElementById('profile-display-name').value.trim()
+            const bio = document.getElementById('profile-bio').value.trim()
+            const website = document.getElementById('profile-website').value.trim()
+            
+            // 表示名の入力チェック
+            if (!displayName) {
+                showProfileMessage('表示名を入力してください', true)
+                return
+            }
+            
+            // ウェブサイトURLの形式チェック
+            if (website && !isValidUrl(website)) {
+                showProfileMessage('正しいURL形式で入力してください', true)
+                return
+            }
+            
+            // ローディング開始
+            const saveButton = document.getElementById('save-profile-button')
+            saveButton.disabled = true
+            saveButton.textContent = '保存中...'
+            
+            try {
+                // アバターデータを取得（画像または絵文字）
+                const avatarData = window.selectedAvatarData || document.getElementById('profile-avatar-preview-text').textContent
+                
+                const { error } = await supabase.auth.updateUser({
+                    data: {
+                        display_name: displayName,
+                        bio: bio,
+                        website: website,
+                        avatar: avatarData,
+                        avatar_type: window.selectedAvatarData ? 'image' : 'emoji'
+                    }
+                })
+                
+                if (error) {
+                    console.error('プロフィール更新エラー:', error)
+                    showProfileMessage('エラー: ' + error.message, true)
+                } else {
+                    showProfileMessage('プロフィールが正常に更新されました！', false)
+                    showNotification('プロフィール更新完了', 'success', '変更が保存されました')
+                    
+                    // メイン画面のプロフィール表示を更新
+                    updateProfileDisplay()
+                    
+                    // 2秒後にモーダルを閉じる
+                    setTimeout(() => {
+                        closeProfileModal()
+                    }, 2000)
+                }
+            } finally {
+                // ローディング終了
+                saveButton.disabled = false
+                saveButton.textContent = '保存'
+            }
+        }
+        
+        // URL形式チェック
+        function isValidUrl(string) {
+            try {
+                new URL(string)
+                return true
+            } catch (_) {
+                return false
+            }
+        }
+        
+        // ブラウザ通知機能
+        async function requestNotificationPermission() {
+            if ('Notification' in window) {
+                const permission = await Notification.requestPermission()
+                return permission === 'granted'
+            }
+            return false
+        }
+        
+        // 通知を表示
+        function showNotification(title, type = 'info', body = '') {
+            // アプリ内通知
+            showInAppNotification(title, type, body)
+            
+            // ブラウザ通知
+            if (Notification.permission === 'granted') {
+                const options = {
+                    body: body,
+                    icon: '👤', // 簡易アイコン
+                    badge: '📱',
+                    tag: 'todo-app-notification'
+                }
+                
+                const iconMap = {
+                    'success': '✅',
+                    'error': '❌',
+                    'warning': '⚠️',
+                    'info': 'ℹ️'
+                }
+                
+                options.icon = iconMap[type] || '📱'
+                
+                const notification = new Notification(title, options)
+                
+                // 5秒後に自動で閉じる
+                setTimeout(() => {
+                    notification.close()
+                }, 5000)
+            }
+        }
+        
+        // アプリ内通知（画面内のトースト通知）
+        function showInAppNotification(title, type = 'info', body = '') {
+            // 通知コンテナが存在しない場合は作成
+            let container = document.getElementById('notification-container')
+            if (!container) {
+                container = document.createElement('div')
+                container.id = 'notification-container'
+                container.className = 'fixed top-4 right-4 z-50 space-y-2'
+                document.body.appendChild(container)
+            }
+            
+            // 通知要素を作成
+            const notification = document.createElement('div')
+            notification.className = `p-4 rounded-lg shadow-lg max-w-sm ${getNotificationStyle(type)} transform transition-all duration-300 ease-in-out opacity-0 translate-x-full`
+            
+            const iconMap = {
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️',
+                'info': 'ℹ️'
+            }
+            
+            notification.innerHTML = `
+                <div class="flex items-start">
+                    <span class="text-lg mr-3">${iconMap[type] || 'ℹ️'}</span>
+                    <div class="flex-1">
+                        <div class="font-medium">${title}</div>
+                        ${body ? `<div class="text-sm mt-1">${body}</div>` : ''}
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-gray-400 hover:text-gray-600">×</button>
+                </div>
+            `
+            
+            container.appendChild(notification)
+            
+            // アニメーション表示
+            setTimeout(() => {
+                notification.classList.remove('opacity-0', 'translate-x-full')
+            }, 100)
+            
+            // 5秒後に自動削除
+            setTimeout(() => {
+                notification.classList.add('opacity-0', 'translate-x-full')
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove()
+                    }
+                }, 300)
+            }, 5000)
+        }
+        
+        // 通知スタイルを取得
+        function getNotificationStyle(type) {
+            const styles = {
+                'success': 'bg-green-100 border-green-500 text-green-700',
+                'error': 'bg-red-100 border-red-500 text-red-700',
+                'warning': 'bg-yellow-100 border-yellow-500 text-yellow-700',
+                'info': 'bg-blue-100 border-blue-500 text-blue-700'
+            }
+            return styles[type] || styles.info
+        }
 
         // ログイン関数
         async function signIn() {
             const email = document.getElementById('email').value
             const password = document.getElementById('password').value
             
+            // 入力チェック
+            if (!email || !password) {
+                showMessage('メールアドレスとパスワードを入力してください', true)
+                return
+            }
+            
+            // メールアドレスの形式チェック
+            if (!isValidEmail(email)) {
+                showMessage('正しいメールアドレスの形式で入力してください', true)
+                return
+            }
+            
             // メッセージをクリア
             hideMessage()
             
-            console.log('ログイン試行:', email)
+            // ローディング開始
+            setLoading(true)
             
-            // ログインのみを実行
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email: email,
-                password: password
-            })
-            
-            console.log('ログイン結果:', { data, error })
-            
-            if (error) {
-                console.error('詳細なエラー情報:', error)
-                showMessage('エラー: ' + error.message, true)
-            } else {
-                showUserInfo(data.user)
+            try {
+                console.log('ログイン試行:', email)
+                
+                // ログインのみを実行
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                })
+                
+                console.log('ログイン結果:', { data, error })
+                
+                if (error) {
+                    console.error('詳細なエラー情報:', error)
+                    showMessage('エラー: ' + error.message, true)
+                } else {
+                    showMessage('ログインに成功しました！', false)
+                    showNotification('ログイン成功', 'success', 'ようこそ！')
+                    setTimeout(() => {
+                        showUserInfo(data.user)
+                    }, 1000)
+                }
+            } finally {
+                // ローディング終了
+                setLoading(false)
             }
         }
 
@@ -239,11 +820,57 @@
             document.getElementById('user-info').style.display = 'block'
             
             // プロフィール情報を表示
-            document.getElementById('user-email').textContent = 'メール: ' + user.email
-            document.getElementById('user-created').textContent = '登録日: ' + new Date(user.created_at).toLocaleDateString('ja-JP')
-            document.getElementById('user-last-signin').textContent = '最終ログイン: ' + new Date(user.last_sign_in_at).toLocaleString('ja-JP')
+            updateProfileDisplay(user)
             
             loadTodos()
+        }
+        
+        // プロフィール表示を更新
+        async function updateProfileDisplay(user = null) {
+            if (!user) {
+                const { data: { user: currentUser } } = await supabase.auth.getUser()
+                user = currentUser
+            }
+            
+            if (user) {
+                const metadata = user.user_metadata || {}
+                
+                // 基本情報
+                document.getElementById('user-email').textContent = user.email
+                document.getElementById('user-created').textContent = new Date(user.created_at).toLocaleDateString('ja-JP')
+                document.getElementById('user-last-signin').textContent = new Date(user.last_sign_in_at).toLocaleString('ja-JP')
+                
+                // カスタム情報
+                document.getElementById('user-display-name').textContent = metadata.display_name || 'ユーザー名'
+                
+                // アバター表示（画像または絵文字）
+                const avatarImg = document.getElementById('user-avatar-img')
+                const avatarText = document.getElementById('user-avatar-text')
+                
+                if (metadata.avatar_type === 'image' && metadata.avatar) {
+                    avatarImg.src = metadata.avatar
+                    avatarImg.classList.remove('hidden')
+                    avatarText.classList.add('hidden')
+                } else {
+                    avatarText.textContent = metadata.avatar || '👤'
+                    avatarImg.classList.add('hidden')
+                    avatarText.classList.remove('hidden')
+                }
+                
+                const bioElement = document.getElementById('user-bio')
+                if (metadata.bio) {
+                    bioElement.textContent = metadata.bio
+                    bioElement.classList.remove('italic')
+                } else {
+                    bioElement.textContent = '自己紹介がありません'
+                    bioElement.classList.add('italic')
+                }
+                
+                // ウェブサイトリンクがある場合は表示
+                if (metadata.website) {
+                    bioElement.innerHTML += `<br><a href="${metadata.website}" target="_blank" class="text-blue-600 hover:text-blue-800 text-xs">🌐 ${metadata.website}</a>`
+                }
+            }
         }
 
         // 統計情報更新関数
@@ -365,9 +992,11 @@
             
             if (error) {
                 alert('エラー: ' + error.message)
+                showNotification('TODO追加エラー', 'error', error.message)
             } else {
                 todoInput.value = ''
                 dueDateInput.value = ''
+                showNotification('TODO追加完了', 'success', 'TODOが追加されました')
                 loadTodos()
             }
         }
@@ -559,16 +1188,101 @@
         
         // ページ読み込み時にセッション確認
         window.addEventListener('load', async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (user) {
-                showUserInfo(user)
+            // URLパラメータをチェック（パスワードリセットリンクから来たかどうか）
+            const urlParams = new URLSearchParams(window.location.search)
+            const accessToken = urlParams.get('access_token')
+            const refreshToken = urlParams.get('refresh_token')
+            const type = urlParams.get('type')
+            
+            // パスワードリセットの場合
+            if (type === 'recovery' && accessToken && refreshToken) {
+                try {
+                    // セッションを設定
+                    const { error } = await supabase.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken
+                    })
+                    
+                    if (!error) {
+                        // パスワード更新フォームを表示
+                        document.getElementById('reset-email-form').style.display = 'none'
+                        document.getElementById('update-password-form').style.display = 'block'
+                        openResetModal()
+                    }
+                } catch (err) {
+                    console.error('セッション設定エラー:', err)
+                }
+            } else {
+                // 通常のセッション確認
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user) {
+                    showUserInfo(user)
+                }
             }
             
             // 検索ボックスにイベントリスナーを追加
             document.getElementById('search-input').addEventListener('input', filterTodos)
             document.getElementById('filter-category').addEventListener('change', filterTodos)
             document.getElementById('filter-priority').addEventListener('change', filterTodos)
+            
+            // Enterキーでログイン
+            const emailInput = document.getElementById('email')
+            const passwordInput = document.getElementById('password')
+            
+            const handleEnterKey = (event) => {
+                if (event.key === 'Enter') {
+                    signIn()
+                }
+            }
+            
+            emailInput.addEventListener('keypress', handleEnterKey)
+            passwordInput.addEventListener('keypress', handleEnterKey)
+            
+            // アバター選択のイベントリスナー
+            const avatarInput = document.getElementById('avatar-input')
+            if (avatarInput) {
+                avatarInput.addEventListener('change', handleAvatarSelection)
+            }
+            
+            // 通知権限を要求
+            requestNotificationPermission()
         })
+        
+        // アバター画像選択処理
+        function handleAvatarSelection(event) {
+            const file = event.target.files[0]
+            if (!file) return
+            
+            // ファイルサイズチェック（2MB）
+            if (file.size > 2 * 1024 * 1024) {
+                showProfileMessage('ファイルサイズは2MB以下にしてください', true)
+                return
+            }
+            
+            // ファイル形式チェック
+            if (!file.type.startsWith('image/')) {
+                showProfileMessage('画像ファイルを選択してください', true)
+                return
+            }
+            
+            // FileReaderでプレビュー表示
+            const reader = new FileReader()
+            reader.onload = function(e) {
+                const previewImg = document.getElementById('profile-avatar-preview-img')
+                const previewText = document.getElementById('profile-avatar-preview-text')
+                
+                previewImg.src = e.target.result
+                previewImg.classList.remove('hidden')
+                previewText.classList.add('hidden')
+                
+                // Base64データを保存（実際のプロダクションではSupabase Storageを使用）
+                window.selectedAvatarData = e.target.result
+                
+                showProfileMessage('画像を選択しました！保存ボタンを押してください。', false)
+                showNotification('アバター画像が選択されました', 'success')
+            }
+            reader.readAsDataURL(file)
+        }
     </script>
     </div>
 </body>
