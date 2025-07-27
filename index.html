@@ -12,30 +12,37 @@
     <div class="max-w-4xl w-full space-y-8 p-8">
         <h1 class="text-3xl font-bold text-center text-gray-900">Supabase 認証テスト</h1>
     
-    <div id="auth-form" class="bg-white p-8 rounded-lg shadow-md">
-        <h2 class="text-xl font-semibold text-gray-700 mb-6">ログイン/サインアップ</h2>
-        <div id="message" class="text-sm mb-4"></div>
-        <div class="space-y-4">
-            <input type="email" id="email" placeholder="test@example.com" 
-                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <div class="relative">
-                <input type="password" id="password" placeholder="test1234"
-                       class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <button type="button" onclick="togglePasswordVisibility()" 
-                        class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600 hover:text-gray-800">
-                    <span id="password-toggle-icon">👁️</span>
-                </button>
-            </div>
-        </div>
-        <div class="space-y-2 mt-6">
-        <button id="signup-button" onclick="signUp()" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">サインアップ</button>
-        <button id="signin-button" onclick="signIn()" class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">ログイン</button>
-        <div class="text-center mt-4">
-            <a href="#" onclick="openResetModal()" class="text-blue-600 hover:text-blue-800 text-sm">パスワードを忘れた方はこちら</a>
-        </div>
-        </div>
+    <div id="auth-form" class="bg-white p-8 rounded-lg shadow-md text-center">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">ようこそ！</h2>
+        <p class="text-gray-600 mb-6">TODOアプリを使用するにはログインしてください</p>
+        <button onclick="openLoginModal()" 
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg">
+            ログイン / サインアップ
+        </button>
     </div>
     
+    <!-- ログインモーダル -->
+    <div id="login-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full relative">
+            <button onclick="closeLoginModal()" 
+                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">
+                ×
+            </button>
+            <h3 class="text-xl font-semibold text-gray-700 mb-6">ログイン/サインアップ</h3>
+            <div id="modal-message" class="text-sm mb-4"></div>
+            <div class="space-y-4">
+                <input type="email" id="modal-email" placeholder="test@example.com" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="password" id="modal-password" placeholder="test1234"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="space-y-2 mt-6">
+                <button onclick="modalSignIn()" class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">ログイン</button>
+                <button onclick="modalSignUp()" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">サインアップ</button>
+            </div>
+        </div>
+    </div>
+
     <!-- パスワードリセットモーダル -->
     <div id="reset-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
@@ -82,6 +89,59 @@
         </div>
     </div>
     
+    <!-- TODO編集モーダル -->
+    <div id="edit-todo-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+            <h3 class="text-xl font-semibold text-gray-700 mb-4">TODO編集</h3>
+            <div id="edit-todo-message" class="text-sm mb-4"></div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">タイトル</label>
+                    <input type="text" id="edit-todo-title" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
+                    <select id="edit-todo-category" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="general">一般</option>
+                        <option value="work">仕事</option>
+                        <option value="private">プライベート</option>
+                        <option value="shopping">買い物</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">優先度</label>
+                    <select id="edit-todo-priority" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="3">高</option>
+                        <option value="2">中</option>
+                        <option value="1">低</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">期限</label>
+                    <input type="date" id="edit-todo-due-date" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            
+            <div class="flex space-x-2 mt-6">
+                <button onclick="updateTodo()" 
+                        id="update-todo-button"
+                        class="flex-1 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    更新
+                </button>
+                <button onclick="closeEditTodoModal()" 
+                        class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded">
+                    キャンセル
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- プロフィール編集モーダル -->
     <div id="profile-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
@@ -163,14 +223,36 @@
             </div>
             
             <!-- グラフ表示エリア -->
-            <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="grid grid-cols-3 gap-4 mb-6">
                 <div class="bg-white p-4 rounded-lg shadow">
-                    <h4 class="text-lg font-semibold text-gray-700 mb-2">カテゴリ別TODO</h4>
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="text-lg font-semibold text-gray-700">カテゴリ別</h4>
+                        <button onclick="switchCategoryChart()" 
+                                class="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded">
+                            切替
+                        </button>
+                    </div>
                     <canvas id="categoryChart"></canvas>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow">
-                    <h4 class="text-lg font-semibold text-gray-700 mb-2">優先度別TODO</h4>
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="text-lg font-semibold text-gray-700">優先度別</h4>
+                        <button onclick="switchPriorityChart()" 
+                                class="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded">
+                            切替
+                        </button>
+                    </div>
                     <canvas id="priorityChart"></canvas>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="text-lg font-semibold text-gray-700">進捗状況</h4>
+                        <button onclick="switchStatusChart()" 
+                                class="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded">
+                            切替
+                        </button>
+                    </div>
+                    <canvas id="statusChart"></canvas>
                 </div>
             </div>
             
@@ -233,6 +315,30 @@
         <div class="mb-6">
             <h3 class="text-lg font-semibold text-gray-700 mb-3">検索・フィルタ</h3>
             <div class="bg-gray-50 p-4 rounded-lg space-y-3">
+                <!-- 期間フィルターボタン -->
+                <div class="flex space-x-2 mb-3">
+                    <button onclick="filterByPeriod('all')" 
+                            class="period-btn flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-blue-50 focus:bg-blue-100 focus:border-blue-500"
+                            data-period="all">
+                        全期間
+                    </button>
+                    <button onclick="filterByPeriod('today')" 
+                            class="period-btn flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-blue-50 focus:bg-blue-100 focus:border-blue-500"
+                            data-period="today">
+                        今日
+                    </button>
+                    <button onclick="filterByPeriod('week')" 
+                            class="period-btn flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-blue-50 focus:bg-blue-100 focus:border-blue-500"
+                            data-period="week">
+                        今週
+                    </button>
+                    <button onclick="filterByPeriod('month')" 
+                            class="period-btn flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-blue-50 focus:bg-blue-100 focus:border-blue-500"
+                            data-period="month">
+                        今月
+                    </button>
+                </div>
+                
                 <input type="text" id="search-input" placeholder="TODOを検索..." 
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <div class="flex space-x-2">
@@ -273,9 +379,21 @@
         // グラフインスタンスを保持する変数
         let categoryChart = null
         let priorityChart = null
+        let statusChart = null
+        
+        // グラフタイプを管理する変数
+        let categoryChartType = 'doughnut'  // 初期は円グラフ
+        let priorityChartType = 'bar'       // 初期は棒グラフ
+        let statusChartType = 'doughnut'    // 初期は円グラフ
         
         // ドラッグ中のTODO IDを保持
         let draggedTodoId = null
+        
+        // 編集中のTODO IDを保持
+        let editingTodoId = null
+        
+        // 現在の期間フィルター
+        let currentPeriod = 'all'
         
         // 完全にクリーンなSupabaseクライアント
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
@@ -908,33 +1026,45 @@
                 low: todos.filter(t => t.priority === 1).length
             }
             
+            // 進捗状況別集計
+            const statusData = {
+                completed: todos.filter(t => t.complete).length,
+                incomplete: todos.filter(t => !t.complete).length
+            }
+            
             // グラフを描画
-            drawCharts(categoryData, priorityData)
+            drawCharts(categoryData, priorityData, statusData)
         }
         
         // グラフ描画関数
-        function drawCharts(categoryData, priorityData) {
+        function drawCharts(categoryData, priorityData, statusData) {
             // 既存のグラフがあれば削除
             if (categoryChart) categoryChart.destroy()
             if (priorityChart) priorityChart.destroy()
+            if (statusChart) statusChart.destroy()
             
-            // カテゴリ別円グラフ
+            // カテゴリ別グラフ
             const categoryCtx = document.getElementById('categoryChart').getContext('2d')
             categoryChart = new Chart(categoryCtx, {
-                type: 'doughnut',
+                type: categoryChartType,
                 data: {
                     labels: ['一般', '仕事', 'プライベート', '買い物'],
                     datasets: [{
                         data: [categoryData.general, categoryData.work, categoryData.private, categoryData.shopping],
                         backgroundColor: ['#9CA3AF', '#3B82F6', '#10B981', '#8B5CF6']
                     }]
+                },
+                options: {
+                    plugins: { 
+                        legend: { display: categoryChartType !== 'bar' }
+                    }
                 }
             })
             
-            // 優先度別棒グラフ
+            // 優先度別グラフ
             const priorityCtx = document.getElementById('priorityChart').getContext('2d')
             priorityChart = new Chart(priorityCtx, {
-                type: 'bar',
+                type: priorityChartType,
                 data: {
                     labels: ['高', '中', '低'],
                     datasets: [{
@@ -943,9 +1073,59 @@
                     }]
                 },
                 options: {
-                    plugins: { legend: { display: false } }
+                    plugins: { 
+                        legend: { display: priorityChartType !== 'bar' } 
+                    }
                 }
             })
+            
+            // 進捗状況グラフ
+            const statusCtx = document.getElementById('statusChart').getContext('2d')
+            statusChart = new Chart(statusCtx, {
+                type: statusChartType,
+                data: {
+                    labels: ['完了', '未完了'],
+                    datasets: [{
+                        data: [statusData.completed, statusData.incomplete],
+                        backgroundColor: ['#10B981', '#EF4444']
+                    }]
+                },
+                options: {
+                    plugins: { 
+                        legend: { display: statusChartType !== 'bar' }
+                    }
+                }
+            })
+        }
+        
+        // カテゴリグラフ切り替え関数
+        function switchCategoryChart() {
+            const types = ['doughnut', 'bar', 'pie', 'line']
+            const currentIndex = types.indexOf(categoryChartType)
+            categoryChartType = types[(currentIndex + 1) % types.length]
+            
+            // 現在のデータで再描画
+            updateCharts(allTodos)
+        }
+        
+        // 優先度グラフ切り替え関数
+        function switchPriorityChart() {
+            const types = ['bar', 'doughnut', 'pie', 'line']
+            const currentIndex = types.indexOf(priorityChartType)
+            priorityChartType = types[(currentIndex + 1) % types.length]
+            
+            // 現在のデータで再描画
+            updateCharts(allTodos)
+        }
+        
+        // 進捗状況グラフ切り替え関数
+        function switchStatusChart() {
+            const types = ['doughnut', 'bar', 'pie', 'line']
+            const currentIndex = types.indexOf(statusChartType)
+            statusChartType = types[(currentIndex + 1) % types.length]
+            
+            // 現在のデータで再描画
+            updateCharts(allTodos)
         }
 
         // ユーザー情報非表示
@@ -1075,6 +1255,11 @@
                     </span>
                     ${dueDateStr ? `<span class="px-2 py-1 text-xs rounded ${isOverdue ? 'bg-red-200 text-red-800' : 'bg-blue-100 text-blue-700'} mr-2">📅${dueDateStr}</span>` : ''}
                     <span class="flex-1 ${todo.complete ? 'line-through text-gray-500' : 'text-gray-800'}">${todo.title}</span>
+                    <button onclick="editTodo(${todo.id})" 
+                            class="ml-2 px-3 py-1 text-sm rounded bg-blue-500 hover:bg-blue-600 text-white"
+                            draggable="false">
+                        編集
+                    </button>
                     <button onclick="toggleTodo(${todo.id}, ${!todo.complete})" 
                             class="ml-2 px-3 py-1 text-sm rounded ${todo.complete ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'} text-white"
                             draggable="false">
@@ -1121,7 +1306,86 @@
                 loadTodos()
             }
         }
+        
+        // TODO編集モーダルを開く
+        function editTodo(id) {
+            const todo = allTodos.find(t => t.id === id)
+            if (!todo) return
+            
+            editingTodoId = id
+            
+            // 現在の値をフォームに設定
+            document.getElementById('edit-todo-title').value = todo.title
+            document.getElementById('edit-todo-category').value = todo.category
+            document.getElementById('edit-todo-priority').value = todo.priority
+            document.getElementById('edit-todo-due-date').value = todo.due_date || ''
+            
+            // モーダルを表示
+            document.getElementById('edit-todo-modal').classList.remove('hidden')
+        }
+        
+        // TODO編集モーダルを閉じる
+        function closeEditTodoModal() {
+            document.getElementById('edit-todo-modal').classList.add('hidden')
+            editingTodoId = null
+            // メッセージをクリア
+            document.getElementById('edit-todo-message').textContent = ''
+        }
+        
+        // TODO更新関数
+        async function updateTodo() {
+            if (!editingTodoId) return
+            
+            const title = document.getElementById('edit-todo-title').value.trim()
+            const category = document.getElementById('edit-todo-category').value
+            const priority = parseInt(document.getElementById('edit-todo-priority').value)
+            const dueDate = document.getElementById('edit-todo-due-date').value || null
+            
+            if (!title) {
+                document.getElementById('edit-todo-message').textContent = 'タイトルを入力してください'
+                document.getElementById('edit-todo-message').className = 'text-red-500 text-sm mb-4'
+                return
+            }
+            
+            const { data, error } = await supabase
+                .from('todos')
+                .update({
+                    title: title,
+                    category: category,
+                    priority: priority,
+                    due_date: dueDate
+                })
+                .eq('id', editingTodoId)
+            
+            if (error) {
+                document.getElementById('edit-todo-message').textContent = 'エラー: ' + error.message
+                document.getElementById('edit-todo-message').className = 'text-red-500 text-sm mb-4'
+            } else {
+                showNotification('TODO更新完了', 'success', 'TODOが更新されました')
+                closeEditTodoModal()
+                loadTodos()
+            }
+        }
 
+        // 期間フィルター関数
+        function filterByPeriod(period) {
+            currentPeriod = period
+            
+            // ボタンのスタイルを更新
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                if (btn.dataset.period === period) {
+                    btn.classList.add('bg-blue-100', 'border-blue-500')
+                    btn.classList.remove('border-gray-300')
+                } else {
+                    btn.classList.remove('bg-blue-100', 'border-blue-500')
+                    btn.classList.add('border-gray-300')
+                }
+            })
+            
+            // フィルターを適用
+            filterTodos()
+        }
+        
         // 検索機能
         function filterTodos() {
             const searchText = document.getElementById('search-input').value.toLowerCase()
@@ -1138,8 +1402,32 @@
                 // 優先度フィルタ
                 const matchesPriority = !filterPriority || todo.priority === parseInt(filterPriority)
                 
+                // 期間フィルタ
+                let matchesPeriod = true
+                if (currentPeriod !== 'all') {
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+                    const todoDate = new Date(todo.created_at)
+                    
+                    switch (currentPeriod) {
+                        case 'today':
+                            matchesPeriod = todoDate >= today
+                            break
+                        case 'week':
+                            const weekAgo = new Date(today)
+                            weekAgo.setDate(weekAgo.getDate() - 7)
+                            matchesPeriod = todoDate >= weekAgo
+                            break
+                        case 'month':
+                            const monthAgo = new Date(today)
+                            monthAgo.setMonth(monthAgo.getMonth() - 1)
+                            matchesPeriod = todoDate >= monthAgo
+                            break
+                    }
+                }
+                
                 // すべての条件を満たすものだけを返す
-                return matchesSearch && matchesCategory && matchesPriority
+                return matchesSearch && matchesCategory && matchesPriority && matchesPeriod
             })
             
             displayTodos(filteredTodos)
@@ -1186,6 +1474,72 @@
             draggedTodoId = null
         }
         
+        // ログインモーダルを開く
+        function openLoginModal() {
+            const modal = document.getElementById('login-modal')
+            modal.classList.remove('hidden')
+        }
+        
+        // ログインモーダルを閉じる
+        function closeLoginModal() {
+            const modal = document.getElementById('login-modal')
+            modal.classList.add('hidden')
+            // 入力内容をクリア
+            document.getElementById('modal-email').value = ''
+            document.getElementById('modal-password').value = ''
+            document.getElementById('modal-message').textContent = ''
+        }
+        
+        // モーダルからログイン
+        async function modalSignIn() {
+            const email = document.getElementById('modal-email').value
+            const password = document.getElementById('modal-password').value
+            
+            if (!email || !password) {
+                document.getElementById('modal-message').textContent = 'メールアドレスとパスワードを入力してください'
+                document.getElementById('modal-message').className = 'text-red-500 text-sm mb-4'
+                return
+            }
+            
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password
+            })
+            
+            if (error) {
+                document.getElementById('modal-message').textContent = 'エラー: ' + error.message
+                document.getElementById('modal-message').className = 'text-red-500 text-sm mb-4'
+            } else {
+                closeLoginModal()
+                showUserInfo(data.user)
+            }
+        }
+        
+        // モーダルからサインアップ
+        async function modalSignUp() {
+            const email = document.getElementById('modal-email').value
+            const password = document.getElementById('modal-password').value
+            
+            if (!email || !password) {
+                document.getElementById('modal-message').textContent = 'メールアドレスとパスワードを入力してください'
+                document.getElementById('modal-message').className = 'text-red-500 text-sm mb-4'
+                return
+            }
+            
+            const { data, error } = await supabase.auth.signUp({
+                email: email,
+                password: password
+            })
+            
+            if (error) {
+                document.getElementById('modal-message').textContent = 'エラー: ' + error.message
+                document.getElementById('modal-message').className = 'text-red-500 text-sm mb-4'
+            } else {
+                document.getElementById('modal-message').textContent = 'サインアップ成功！メールを確認してください'
+                document.getElementById('modal-message').className = 'text-green-500 text-sm mb-4'
+            }
+        }
+
         // ページ読み込み時にセッション確認
         window.addEventListener('load', async () => {
             // URLパラメータをチェック（パスワードリセットリンクから来たかどうか）
@@ -1246,6 +1600,9 @@
             
             // 通知権限を要求
             requestNotificationPermission()
+            
+            // 初期表示で全期間ボタンをアクティブにする
+            filterByPeriod('all')
         })
         
         // アバター画像選択処理
