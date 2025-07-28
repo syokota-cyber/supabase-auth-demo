@@ -12,13 +12,20 @@ let editingTodoId = null
 // 現在の期間フィルター
 let currentPeriod = 'all'
 
+// 現在のタスクタイプフィルター
+let currentTaskTypeFilter = 'all'
+
 // TODO追加関数
 async function addTodo() {
     const todoInput = document.getElementById('todo-input')
+    const typeSelect = document.getElementById('todo-type')
     const categorySelect = document.getElementById('todo-category')
     const prioritySelect = document.getElementById('todo-priority')
     const dueDateInput = document.getElementById('todo-due-date')
+    const recurrencePattern = document.getElementById('recurrence-pattern')
+    
     const title = todoInput.value.trim()
+    const taskType = typeSelect.value
     const category = categorySelect.value
     const priority = parseInt(prioritySelect.value)
     const dueDate = dueDateInput.value || null
@@ -30,11 +37,47 @@ async function addTodo() {
     
     const { data: { user } } = await supabase.auth.getUser()
     
+    // タスクタイプに応じたデータを準備
+    const todoData = {
+        user_id: user.id,
+        title: title,
+        category: category,
+        priority: priority,
+        task_type: taskType,
+        complete: false
+    }
+    
+    // タスクタイプ別の追加処理
+    if (taskType === 'deadline') {
+        todoData.due_date = dueDate
+    } else if (taskType === 'habit') {
+        // 習慣タスクの場合、habit_templatesに登録
+        const { data: habitData, error: habitError } = await supabase
+            .from('habit_templates')
+            .insert([{
+                user_id: user.id,
+                title: title,
+                category: category,
+                priority: priority,
+                recurrence_pattern: recurrencePattern.value,
+                is_active: true
+            }])
+            .select()
+            .single()
+        
+        if (habitError) {
+            alert('習慣タスク作成エラー: ' + habitError.message)
+            return
+        }
+        
+        // 今日の習慣タスクを作成
+        todoData.parent_habit_id = habitData.id
+        todoData.recurrence_pattern = recurrencePattern.value
+    }
+    
     const { data, error } = await supabase
         .from('todos')
-        .insert([
-            { user_id: user.id, title: title, category: category, priority: priority, due_date: dueDate, complete: false }
-        ])
+        .insert([todoData])
     
     if (error) {
         alert('エラー: ' + error.message)
@@ -98,6 +141,13 @@ function displayTodos(todos) {
         }
         const priorityNames = { 3: '高', 2: '中', 1: '低' }
         
+        // タスクタイプアイコン
+        const taskTypeIcons = {
+            'habit': '🔄',
+            'deadline': '📅',
+            'normal': ''
+        }
+        
         // 期限判定
         const isOverdue = todo.due_date && new Date(todo.due_date) < new Date() && !todo.complete
         const dueDateStr = todo.due_date ? new Date(todo.due_date).toLocaleDateString('ja-JP') : ''
@@ -112,14 +162,23 @@ function displayTodos(todos) {
         todoItem.addEventListener('dragover', handleDragOver)
         todoItem.addEventListener('drop', handleDrop)
         todoItem.addEventListener('dragend', handleDragEnd)
+        // 習慣タスクの場合、過去7日間の達成状況を表示
+        let habitStreak = ''
+        if (todo.task_type === 'habit') {
+            habitStreak = generateHabitStreak(todo)
+        }
+        
         todoItem.innerHTML = `
+            ${taskTypeIcons[todo.task_type] ? `<span class="text-lg mr-2">${taskTypeIcons[todo.task_type]}</span>` : ''}
+            ${todo.task_type === 'habit' && todo.streak_count > 0 ? `<span class="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-700 mr-2">🔥${todo.streak_count}日</span>` : ''}
+            ${habitStreak}
             <span class="px-2 py-1 text-xs rounded-full ${priorityColors[todo.priority] || priorityColors[2]} mr-2">
                 ${priorityNames[todo.priority] || '中'}
             </span>
             <span class="px-2 py-1 text-xs rounded-full ${categoryColors[todo.category] || categoryColors.general} mr-2">
                 ${categoryNames[todo.category] || 'その他'}
             </span>
-            ${dueDateStr ? `<span class="px-2 py-1 text-xs rounded ${isOverdue ? 'bg-red-200 text-red-800' : 'bg-blue-100 text-blue-700'} mr-2">📅${dueDateStr}</span>` : ''}
+            ${dueDateStr && todo.task_type === 'deadline' ? `<span class="px-2 py-1 text-xs rounded ${isOverdue ? 'bg-red-200 text-red-800' : 'bg-blue-100 text-blue-700'} mr-2">期限:${dueDateStr}</span>` : ''}
             <span class="flex-1 ${todo.complete ? 'line-through text-gray-500' : 'text-gray-800'}">${todo.title}</span>
             <button onclick="editTodo(${todo.id})" 
                     class="ml-2 px-3 py-1 text-sm rounded bg-blue-500 hover:bg-blue-600 text-white"
@@ -143,15 +202,37 @@ function displayTodos(todos) {
 
 // TODO完了/未完了切り替え関数
 async function toggleTodo(id, completed) {
-    const { data, error } = await supabase
-        .from('todos')
-        .update({ complete: completed })
-        .eq('id', id)
+    const todo = allTodos.find(t => t.id === id)
     
-    if (error) {
-        alert('エラー: ' + error.message)
+    if (todo && todo.task_type === 'habit' && completed) {
+        // 習慣タスクの完了処理
+        const { data, error } = await supabase
+            .from('todos')
+            .update({ 
+                complete: completed,
+                streak_count: (todo.streak_count || 0) + 1,
+                last_completed_date: new Date().toISOString().split('T')[0]
+            })
+            .eq('id', id)
+        
+        if (error) {
+            alert('エラー: ' + error.message)
+        } else {
+            showNotification('習慣達成！', 'success', `連続${(todo.streak_count || 0) + 1}日達成しました！`)
+            loadTodos()
+        }
     } else {
-        loadTodos()
+        // 通常タスクの完了処理
+        const { data, error } = await supabase
+            .from('todos')
+            .update({ complete: completed })
+            .eq('id', id)
+        
+        if (error) {
+            alert('エラー: ' + error.message)
+        } else {
+            loadTodos()
+        }
     }
 }
 
@@ -260,6 +341,28 @@ function filterTodos() {
         // 優先度フィルタ
         const matchesPriority = !filterPriority || todo.priority === parseInt(filterPriority)
         
+        // タスクタイプフィルタ
+        let matchesTaskType = true
+        if (currentTaskTypeFilter !== 'all') {
+            switch (currentTaskTypeFilter) {
+                case 'today':
+                    // 今日のタスク（通常タスク + 今日の習慣タスク + 今日が期限の納期タスク）
+                    const today = new Date().toISOString().split('T')[0]
+                    matchesTaskType = (
+                        todo.task_type === 'normal' ||
+                        (todo.task_type === 'habit' && !todo.complete) ||
+                        (todo.task_type === 'deadline' && todo.due_date === today)
+                    )
+                    break
+                case 'habit':
+                    matchesTaskType = todo.task_type === 'habit'
+                    break
+                case 'deadline':
+                    matchesTaskType = todo.task_type === 'deadline'
+                    break
+            }
+        }
+        
         // 期間フィルタ
         let matchesPeriod = true
         if (currentPeriod !== 'all') {
@@ -285,7 +388,7 @@ function filterTodos() {
         }
         
         // すべての条件を満たすものだけを返す
-        return matchesSearch && matchesCategory && matchesPriority && matchesPeriod
+        return matchesSearch && matchesCategory && matchesPriority && matchesTaskType && matchesPeriod
     })
     
     displayTodos(filteredTodos)
@@ -323,4 +426,133 @@ function swapTodoPositions(draggedId, targetId) {
 function handleDragEnd(event) {
     event.target.style.opacity = '1'
     draggedTodoId = null
+}
+
+// 習慣タスクの自動生成
+async function generateDailyHabits() {
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    // アクティブな習慣テンプレートを取得
+    const { data: templates, error: templatesError } = await supabase
+        .from('habit_templates')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+    
+    if (templatesError) {
+        console.error('習慣テンプレート取得エラー:', templatesError)
+        return
+    }
+    
+    const today = new Date().toISOString().split('T')[0]
+    
+    for (const template of templates) {
+        // 今日の習慣タスクが既に存在するか確認
+        const { data: existingTodos, error: checkError } = await supabase
+            .from('todos')
+            .select('*')
+            .eq('parent_habit_id', template.id)
+            .gte('created_at', today + 'T00:00:00')
+            .lte('created_at', today + 'T23:59:59')
+        
+        if (checkError) {
+            console.error('既存タスクチェックエラー:', checkError)
+            continue
+        }
+        
+        // 今日のタスクがまだ作成されていない場合は作成
+        if (!existingTodos || existingTodos.length === 0) {
+            const { error: createError } = await supabase
+                .from('todos')
+                .insert([{
+                    user_id: user.id,
+                    title: template.title,
+                    category: template.category,
+                    priority: template.priority,
+                    task_type: 'habit',
+                    parent_habit_id: template.id,
+                    recurrence_pattern: template.recurrence_pattern,
+                    complete: false,
+                    streak_count: 0
+                }])
+            
+            if (createError) {
+                console.error('習慣タスク作成エラー:', createError)
+            }
+        }
+    }
+    
+    // TODOリストを再読み込み
+    loadTodos()
+}
+
+// タスクタイプフィルター関数
+function filterByTaskType(taskType) {
+    currentTaskTypeFilter = taskType
+    
+    // ボタンのスタイルを更新
+    document.querySelectorAll('.task-type-btn').forEach(btn => {
+        if (btn.dataset.taskType === taskType) {
+            btn.classList.add('bg-blue-100', 'border-blue-500')
+            btn.classList.remove('border-gray-300')
+        } else {
+            btn.classList.remove('bg-blue-100', 'border-blue-500')
+            btn.classList.add('border-gray-300')
+        }
+    })
+    
+    // フィルターを適用
+    filterTodos()
+}
+
+// 習慣タスクの連続達成状況を視覚的に表示
+function generateHabitStreak(todo) {
+    if (!todo.parent_habit_id) return ''
+    
+    // 過去7日間の達成状況を表示（仮実装）
+    // 実際には過去の完了履歴をデータベースから取得する必要があります
+    const today = new Date()
+    let streakHTML = '<div class="inline-flex items-center gap-0.5 mr-3 px-2 py-1 bg-gray-50 rounded-lg">'
+    
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date(today)
+        date.setDate(date.getDate() - i)
+        const isToday = i === 0
+        
+        // 仮の達成状況（実際にはデータベースから取得）
+        const isCompleted = todo.complete && isToday ? true : (i > 0 && Math.random() > 0.3) // デモ用
+        const isPending = isToday && !todo.complete
+        
+        let dotClass = 'w-2 h-2 rounded-full '
+        if (isCompleted) {
+            dotClass += 'bg-green-500'
+        } else if (isPending) {
+            dotClass += 'bg-yellow-400 animate-pulse'
+        } else {
+            dotClass += 'bg-gray-300'
+        }
+        
+        streakHTML += `<div class="${dotClass}" title="${date.toLocaleDateString('ja-JP')}"></div>`
+    }
+    
+    streakHTML += '</div>'
+    return streakHTML
+}
+
+// タスクタイプ選択時の表示切り替え
+function toggleTaskTypeOptions() {
+    const taskType = document.getElementById('todo-type').value
+    const habitOptions = document.getElementById('habit-options')
+    const dueDateInput = document.getElementById('todo-due-date')
+    
+    if (taskType === 'habit') {
+        habitOptions.classList.remove('hidden')
+        dueDateInput.disabled = true
+        dueDateInput.value = ''
+        dueDateInput.style.display = 'none'
+    } else {
+        habitOptions.classList.add('hidden')
+        dueDateInput.disabled = false
+        dueDateInput.style.display = 'block'
+    }
 }

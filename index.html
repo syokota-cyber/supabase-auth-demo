@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supabase認証デモ</title>
+    <title>TODOアプリ - タスク管理システム</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,7 +11,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
     <div class="max-w-4xl w-full space-y-8 p-8">
-        <h1 class="text-3xl font-bold text-center text-gray-900">Supabase 認証テスト</h1>
+        <h1 class="text-3xl font-bold text-center text-gray-900">TODOアプリ - タスク管理システム</h1>
     
     <div id="auth-form" class="bg-white p-8 rounded-lg shadow-md text-center">
         <h2 class="text-2xl font-bold text-gray-800 mb-4">ようこそ！</h2>
@@ -34,12 +34,17 @@
             <div class="space-y-4">
                 <input type="email" id="modal-email" placeholder="test@example.com" 
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="password" id="modal-password" placeholder="test1234"
+                <input type="password" id="modal-password" placeholder="password"
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <div class="space-y-2 mt-6">
                 <button onclick="modalSignIn()" class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">ログイン</button>
                 <button onclick="modalSignUp()" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">サインアップ</button>
+                <div class="text-center mt-4">
+                    <a href="#" onclick="openResetModal(); closeLoginModal();" class="text-sm text-blue-600 hover:text-blue-800 underline">
+                        パスワードを忘れた場合
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -105,8 +110,16 @@
             
             <!-- メール送信フォーム -->
             <div id="reset-email-form">
-                <p class="text-gray-600 mb-4">登録したメールアドレスに、パスワードリセット用のリンクを送信します。</p>
-                <input type="email" id="reset-email" placeholder="メールアドレス" 
+                <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                    <div class="flex items-center">
+                        <span class="text-blue-500 text-xl mr-2">📧</span>
+                        <div>
+                            <p class="text-blue-800 font-semibold text-sm">パスワードリセット</p>
+                            <p class="text-blue-700 text-xs">登録したメールアドレスにリセット用のリンクを送信します</p>
+                        </div>
+                    </div>
+                </div>
+                <input type="email" id="reset-email" placeholder="メールアドレスを入力してください" 
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
                 <div class="flex space-x-2">
                     <button onclick="sendResetEmail()" 
@@ -192,6 +205,53 @@
                     保存
                 </button>
                 <button onclick="closeProfileModal()" 
+                        class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded">
+                    キャンセル
+                </button>
+            </div>
+            
+            <!-- アカウント削除セクション -->
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <h4 class="text-sm font-semibold text-red-600 mb-2">危険な操作</h4>
+                <button onclick="confirmDeleteAccount()" 
+                        class="w-full bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2 px-4 rounded border border-red-300">
+                    アカウントを削除
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- アカウント削除確認モーダル -->
+    <div id="delete-account-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+            <h3 class="text-xl font-semibold text-red-600 mb-4">⚠️ アカウント削除の確認</h3>
+            <div class="space-y-4">
+                <p class="text-gray-700">
+                    本当にアカウントを削除しますか？この操作は取り消すことができません。
+                </p>
+                <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+                    <li>すべてのTODOデータが削除されます</li>
+                    <li>プロフィール情報が削除されます</li>
+                    <li>習慣タスクの記録が削除されます</li>
+                </ul>
+                <div class="bg-red-50 p-3 rounded border border-red-200">
+                    <p class="text-sm text-red-700">
+                        確認のため、下のボックスに「削除」と入力してください：
+                    </p>
+                    <input type="text" id="delete-confirmation-input" 
+                           placeholder="削除" 
+                           class="mt-2 w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+            </div>
+            
+            <div class="flex space-x-2 mt-6">
+                <button onclick="deleteAccount()" 
+                        id="delete-account-button"
+                        class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled>
+                    アカウントを削除
+                </button>
+                <button onclick="closeDeleteAccountModal()" 
                         class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded">
                     キャンセル
                 </button>
@@ -295,6 +355,11 @@
                 <input type="text" id="todo-input" placeholder="TODOを入力..." 
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <div class="flex space-x-2">
+                    <select id="todo-type" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="toggleTaskTypeOptions()">
+                        <option value="normal">通常</option>
+                        <option value="habit">習慣</option>
+                        <option value="deadline">納期</option>
+                    </select>
                     <select id="todo-category" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="general">一般</option>
                         <option value="work">仕事</option>
@@ -309,6 +374,15 @@
                     <input type="date" id="todo-due-date" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <button onclick="addTodo()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">追加</button>
                 </div>
+                <!-- 習慣タスク用オプション -->
+                <div id="habit-options" class="hidden mt-2 p-3 bg-blue-50 rounded-md">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">繰り返しパターン</label>
+                    <select id="recurrence-pattern" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="daily">毎日</option>
+                        <option value="weekly">週次</option>
+                        <option value="monthly">月次</option>
+                    </select>
+                </div>
             </div>
         </div>
         
@@ -316,22 +390,27 @@
         <div class="mb-6">
             <h3 class="text-lg font-semibold text-gray-700 mb-3">検索・フィルタ</h3>
             <div class="bg-gray-50 p-4 rounded-lg space-y-3">
-                <!-- 期間フィルターボタン -->
+                <!-- タスクタイプフィルターボタン -->
                 <div class="flex space-x-2 mb-3">
-                    <button onclick="filterByPeriod('all')" 
-                            class="period-btn flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-blue-50 focus:bg-blue-100 focus:border-blue-500"
-                            data-period="all">
-                        全期間
+                    <button onclick="filterByTaskType('all')" 
+                            class="task-type-btn flex-1 px-3 py-2 text-sm border-2 border-gray-300 rounded-md hover:bg-blue-50 transition-colors bg-blue-100 border-blue-500"
+                            data-task-type="all">
+                        すべて
                     </button>
-                    <button onclick="filterByPeriod('today')" 
-                            class="period-btn flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-blue-50 focus:bg-blue-100 focus:border-blue-500"
-                            data-period="today">
-                        今日
+                    <button onclick="filterByTaskType('today')" 
+                            class="task-type-btn flex-1 px-3 py-2 text-sm border-2 border-gray-300 rounded-md hover:bg-blue-50 transition-colors"
+                            data-task-type="today">
+                        今日のタスク
                     </button>
-                    <button onclick="filterByPeriod('week')" 
-                            class="period-btn flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-blue-50 focus:bg-blue-100 focus:border-blue-500"
-                            data-period="week">
-                        今週
+                    <button onclick="filterByTaskType('habit')" 
+                            class="task-type-btn flex-1 px-3 py-2 text-sm border-2 border-gray-300 rounded-md hover:bg-blue-50 transition-colors"
+                            data-task-type="habit">
+                        習慣
+                    </button>
+                    <button onclick="filterByTaskType('deadline')" 
+                            class="task-type-btn flex-1 px-3 py-2 text-sm border-2 border-gray-300 rounded-md hover:bg-blue-50 transition-colors"
+                            data-task-type="deadline">
+                        納期あり
                     </button>
                     <button onclick="filterByPeriod('month')" 
                             class="period-btn flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-blue-50 focus:bg-blue-100 focus:border-blue-500"
@@ -374,6 +453,7 @@
     <script src="js/todos.js"></script>
     <script src="js/charts.js"></script>
     <script src="js/modals.js"></script>
+    <script src="js/account.js"></script>
     <script src="js/main.js"></script>
     </div>
 </body>

@@ -344,4 +344,9 @@ window.addEventListener('load', async () => {
     
     // 初期表示で全期間ボタンをアクティブにする
     filterByPeriod('all')
+    
+    // ユーザーがログインしている場合、習慣タスクを生成
+    if (user) {
+        await generateDailyHabits()
+    }
 })
